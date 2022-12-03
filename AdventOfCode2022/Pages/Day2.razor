@@ -1,0 +1,112 @@
+﻿@page "/day-2"
+<h3>Day2</h3>
+
+<p>The total score is: @totalScore</p>
+<p>The real is score is: @realScore</p>
+
+@code {
+    const int drawValue = 3;
+    const int winValue = 6;
+    const int lossValue = 0;
+    const int rockValue = 1;
+    const int paperValue = 2;
+    const int scissorsValue = 3;
+    int totalScore = 0;
+    int realScore = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // We read the input
+        string[] input = await File.ReadAllLinesAsync($"{System.IO.Directory.GetCurrentDirectory()}{@"\wwwroot\Day2Input.txt"}");
+        int currentScore = 0;
+
+        foreach(var item in input)
+        {
+            string splittedInput = item.Replace(" ", "");
+
+            switch (splittedInput)
+            {
+                case "AX":
+                    currentScore += (rockValue + drawValue); // Rock vs Rock
+                    break;
+
+                case "AY":
+                    currentScore += (paperValue + winValue); // Rock vs Paper
+                    break;
+                case "AZ":
+                    currentScore += (scissorsValue + lossValue); // Rock vs scissor
+                    break;
+                case "BX":
+                    currentScore += (rockValue + lossValue); // Paper vs Rock
+                    break;
+                case "BY":
+                    currentScore += (paperValue + drawValue); // Paper vs Paper
+                    break;
+                case "BZ":
+                    currentScore += (scissorsValue + winValue); // Paper vs Scissors
+                    break;
+                case "CX":
+                    currentScore += (rockValue + winValue); // Scissors vs Rock
+                    break;
+                case "CY":
+                    currentScore += (paperValue + lossValue); // Scissors vs Paper
+                    break;
+                case "CZ":
+                    currentScore += (scissorsValue + drawValue); // Scissors vs Scissors
+                    break;
+                default:
+                    throw new Exception("There is an invalid input");
+
+            }           
+
+        }
+
+        totalScore = currentScore;
+
+        currentScore = 0;
+
+        // We proceed to calculate the right total
+        foreach (var item in input)
+        {
+            string splittedInput = item.Replace(" ", "");
+
+            switch (splittedInput)
+            {
+                case "AX":
+                    currentScore += (scissorsValue + lossValue); // Rock and you lose
+                    break;
+
+                case "AY":
+                    currentScore += (rockValue + drawValue); // Rock and is draw
+                    break;
+                case "AZ":
+                    currentScore += (paperValue + winValue); // Rock you win
+                    break;
+                case "BX":
+                    currentScore += (rockValue + lossValue); // Paper and you lose
+                    break;
+                case "BY":
+                    currentScore += (paperValue + drawValue); // Paper and is draw
+                    break;
+                case "BZ":
+                    currentScore += (scissorsValue + winValue); // Paper and you win
+                    break;
+                case "CX":
+                    currentScore += (paperValue + lossValue); // Scissors and you lose
+                    break;
+                case "CY":
+                    currentScore += (scissorsValue + drawValue); // Scissors and is draw
+                    break;
+                case "CZ":
+                    currentScore += (rockValue + winValue); // Scissors and you win
+                    break;
+                default:
+                    throw new Exception("There is an invalid input");
+
+            }
+
+        }
+
+        realScore = currentScore;
+    }
+}

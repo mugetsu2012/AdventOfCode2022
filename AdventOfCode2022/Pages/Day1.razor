@@ -1,0 +1,48 @@
+﻿@page "/day-1"
+<h3>Day1</h3>
+
+@if (calories.Any())
+{
+    <p>The Elf carrying most calories is @calories.Max(x => x.Key) with @calories.Max(x => x.Value) calories</p>
+
+    if (topThreeElves.Any())
+    {
+        <p>The top three elves are:</p>
+        <ul>
+            @foreach (var elf in topThreeElves)
+            {
+                <li>Numer @elf.First().Key with a total of @elf.First().Value calories</li>
+            }
+        </ul>
+        
+        <p>For a total of @topThreeElves.Sum(x => x.Sum(y => y.Value))</p>
+    }
+}
+
+
+
+@code {
+    Dictionary<int, int> calories = new Dictionary<int, int>();
+    List<Dictionary<int, int>> topThreeElves = new List<Dictionary<int, int>>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // We read the input and split by break line
+        string input = await File.ReadAllTextAsync($"{System.IO.Directory.GetCurrentDirectory()}{@"\wwwroot\Day1Input.txt"}");
+        string[] splittedCalories = input.Split("\r\n\r\n");
+
+        // We loop all the chunks of text
+        for(int i = 0; i < splittedCalories.Length; i++)
+        {
+            // We split by line break
+            string[] currentCalories = splittedCalories[i].Split("\r\n");
+
+            // We take all the individual strings for this chunk, convert them to int and sum them
+            int total = currentCalories.Select(stringCalory => int.Parse(stringCalory)).Sum();
+            calories.Add(i, total);
+        }
+
+        //We calculate the top three elves
+        topThreeElves = calories.OrderByDescending(x => x.Value).Take(3).Select(x => new Dictionary<int, int> { { x.Key, x.Value } }).ToList();
+    }
+}
