@@ -1,0 +1,228 @@
+﻿@page "/day-5"
+@using AdventOfCode2022.Models.Day5;
+<h3>Day5</h3>
+
+
+<button @onclick="MoveNext">Next move</button>
+
+@if (string.IsNullOrEmpty(moveText) == false)
+{
+
+    <h2>Current move: @moveText</h2>
+}
+
+@if (string.IsNullOrEmpty(nextMoveText) == false)
+{
+
+    <h3>Next move: @nextMoveText</h3>
+}
+
+<div class="container">
+    @{
+        int max = GetMaxCount();
+    }
+    @for (int i = 0; i < max; i++)
+    {
+        
+        <div class="row">
+            @for (int j = 0; j <= 8; j++)
+          {
+                var item = cratesUI[j].Pop();
+
+                if (item == "  ")
+                {
+                    @:&nbsp;&nbsp;*&nbsp;&nbsp;
+                }
+                else
+                {
+                    @item @:&nbsp;
+                }
+            }
+        </div>
+        
+    }
+
+    <div class="row">
+        <p style="font-size: larger">
+            @for (int i = 1; i <= 9; i++)
+            {
+                @:[@i]&nbsp;
+            }
+        </p>
+    </div>
+
+    
+
+</div>
+
+
+@code {
+
+    List<Stack<string>> crates = new List<Stack<string>>();
+    List<Stack<string>> cratesUI = new List<Stack<string>>();
+    List<MovementCommand> movementCommands = new List<MovementCommand>();
+    int indexMove = 0;
+    string moveText = string.Empty;
+    string nextMoveText = string.Empty;
+    string result = string.Empty;
+
+    protected async override Task OnInitializedAsync()
+    {
+        string[] input = await File.ReadAllLinesAsync($"{System.IO.Directory.GetCurrentDirectory()}{@"\wwwroot\Day5Input.txt"}");
+        int startingRowIndex = 0;
+        int endingColIndex = 0;
+
+        // First, we have to get the break point for reading the matrix
+        for(int i = 0; i < input.Length; i++)
+        {
+            var k = input[i].Substring(0, 2).Trim();
+            if (int.TryParse(k, out int row))
+            {
+                if(row == 1)
+                {
+                    startingRowIndex = i;
+
+                    // We get the last number 
+                    endingColIndex = int.Parse(input[i].Substring(input[i].Length - 2, 1));
+                    break;
+                }
+            }
+        }
+
+        // Now, we now where the crates starts and how many cols we have, we can create stacks for them
+
+
+        int acc = 0;
+        for(int i = 0; i < endingColIndex; i++)
+        {
+            Stack<string> currentStack = new Stack<string>();
+
+            for (int j = startingRowIndex - 1; j >= 0; j--)
+            {
+                var k = input[j].Substring(acc, 3);
+
+                if (k != "   ")
+                {
+                    currentStack.Push(k);
+                }
+            }
+
+            crates.Add(currentStack);
+
+            acc += 4;
+        }
+
+        cratesUI = crates.Select(y => Clone(y)).ToList();
+        cratesUI = CreateCratesForUI(cratesUI);
+
+        // Now, we can read the moving part
+        for (int i = startingRowIndex + 2; i < input.Length; i++)
+        {
+            var moveCommand = input[i].Split("move ");
+            int moveNum = int.Parse(moveCommand[1].Substring(0, 2));
+
+            var fromCommand = moveCommand[1].Split("from ");
+            int moveFrom = int.Parse(fromCommand[1].Substring(0, 1));
+
+            var toCommand = moveCommand[1].Split("to ");
+            int moveTo = int.Parse(toCommand[1].Substring(0, 1));
+
+            movementCommands.Add(new MovementCommand()
+                {
+                    Quantity = moveNum,
+                    From = moveFrom,
+                    To = moveTo,
+                    TextCommand = input[i]
+                });
+
+
+            List<string> items = new List<string>();
+            for (int j = 0; j < moveNum; j++)
+            {
+                items.Add(crates[moveFrom - 1].Pop());               
+            }
+
+            // Now, we have to reverse the list and insert it to the To stack
+            items.Reverse();
+
+            for (int o = 0; o < items.Count; o++)
+            {
+                crates[moveTo - 1].Push(items[o]);
+            }
+
+        }
+
+        result = string.Join("", crates.Where(p => p.Any()).Select(x => x.Peek())).Replace("[", "").Replace("]", "");
+
+        nextMoveText = movementCommands[0].TextCommand;
+    }
+
+    protected void MoveNext()
+    {
+        MovementCommand currentMove = movementCommands[indexMove];
+
+        // Now, we start to move the crates
+        //for (int j = 0; j < currentMove.Quantity; j++)
+        //{
+        //    if (crates[currentMove.From - 1].Any())
+        //    {
+        //        var crate = crates[currentMove.From - 1].Pop();
+        //        crates[currentMove.To - 1].Push(crate);
+        //    }
+        //}
+
+        List<string> items = new List<string>();
+        for (int j = 0; j < currentMove.Quantity; j ++)
+        {            
+            items.Add(crates[currentMove.From - 1].Pop());            
+        }
+
+        // Now, we have to reverse the list and insert it to the To stack
+        items.Reverse();
+
+        items.ForEach(x => crates[currentMove.To - 1].Push(x));
+
+        cratesUI = crates.Select(y => Clone(y)).ToList();
+        cratesUI = CreateCratesForUI(cratesUI);
+        moveText = currentMove.TextCommand;
+        nextMoveText = movementCommands[indexMove + 1].TextCommand;
+
+        if (indexMove == movementCommands.Count - 1)
+        {
+            // After moving all we can get the first element in each stack
+            result = string.Join("", crates.Where(p => p.Any()).Select(x => x.Peek())).Replace("[", "").Replace("]", "");
+        }
+
+        indexMove++;
+    }
+
+    private List<Stack<string>> CreateCratesForUI(List<Stack<string>> input)
+    {
+        List<Stack<string>> result = new List<Stack<string>>();
+        result = input;
+
+        foreach(var item in result)
+        {
+            int max = GetMaxCount();
+            while (item.Count < max)
+            {
+                item.Push("  ");
+            }
+        }
+
+        return result;
+    }
+
+    public static Stack<string> Clone(Stack<string> original)
+    {
+        var arr = new string[original.Count];
+        original.CopyTo(arr, 0);
+        Array.Reverse(arr);
+        return new Stack<string>(arr);
+    }
+
+    private int GetMaxCount()
+    {
+        return !cratesUI.Any() ? 0 : cratesUI.Max(y => y.Count);
+    }
+}

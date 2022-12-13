@@ -1,0 +1,70 @@
+﻿@page "/day-3"
+<h3>Day3</h3>
+
+@if(sum != 0)
+{
+    <p>The total value is: @sum</p>
+}
+
+@if(badgeSum != 0)
+{
+    <p>The badge sum is: @badgeSum</p>
+}
+
+@code {
+    int sum = 0;
+    int badgeSum = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string[] input = await File.ReadAllLinesAsync($"{System.IO.Directory.GetCurrentDirectory()}{@"\wwwroot\Day3Input.txt"}");
+
+        // We declare and fill the lower case and upper case lists
+        Dictionary<char, int> lowerCaseValues = new Dictionary<char, int>();
+        Dictionary<char, int> upperCaseValues = new Dictionary<char, int>();
+
+        int index = 1;
+        for (char c = 'a'; c <= 'z'; c++)
+        {
+
+            lowerCaseValues.Add(c, index);
+            index++;
+
+        }
+
+        for (char c = 'A'; c <= 'Z'; c++)
+        {
+            upperCaseValues.Add(c, index);
+            index++;
+        }
+
+        // Now, we can loop throught all the lines to get the sum
+
+        foreach(var item in input)
+        {
+            string partOne = item.Substring(0, (item.Length / 2));
+            string partTwo = item.Substring((item.Length / 2), (item.Length / 2));
+
+            // We get the char that appears in both strings
+            char[] commonChars = partOne.Intersect(partTwo).ToArray();
+
+            // Now, we get how much each char is worth searching in both lists
+            int value = lowerCaseValues.ContainsKey(commonChars[0]) ? lowerCaseValues[commonChars[0]] : upperCaseValues[commonChars[0]];
+
+            sum += value;
+
+        }
+
+        // Now, we need to check the badges for each three lines
+        foreach(var chunk in input.Chunk(3))
+        {
+            char[] commonChar = chunk[0].Intersect(chunk[1]).Intersect(chunk[2]).ToArray();
+            
+            // Now, we get how much each char is worth searching in both lists
+            int localSum = lowerCaseValues.ContainsKey(commonChar[0]) ? lowerCaseValues[commonChar[0]] : upperCaseValues[commonChar[0]];
+
+            badgeSum += localSum;
+        }
+
+    }
+}

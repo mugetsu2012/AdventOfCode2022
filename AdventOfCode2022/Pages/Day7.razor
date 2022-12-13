@@ -1,0 +1,91 @@
+﻿@using AdventOfCode2022.Models.Day7;
+@using System.Text.RegularExpressions;
+@page "/day-7"
+
+<h3>Day7</h3>
+
+@code {
+
+    private const double TOTAL_SPACE = 70000000;
+    private const double SPACE_FOR_UPDATE = 30000000;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string input = await File.ReadAllTextAsync($"{System.IO.Directory.GetCurrentDirectory()}{@"\wwwroot\Day7Input.txt"}");
+        AOCDirectory root = new AOCDirectory();
+        root.Father = null;
+        root.DirectoryName = "/";
+        AOCDirectory currentDir = root;
+
+        string[] commands = input.Split("$ ");
+
+        for (int i = 0; i < commands.Length; i++)
+        {
+            string[] currentInput = commands[i].Split("\r\n");
+            if(currentInput[0]== "")
+            {
+
+            }
+            else if (currentInput[0].Contains("cd")) // If we are changing directory
+            {
+                string dir = currentInput[0].Replace("cd ", "");
+
+                if(dir == "/")
+                {
+                    currentDir = root;
+                }
+                else if (dir == "..")
+                {
+                    currentDir = currentDir.Father;
+                }
+                else
+                {
+                    // We have to check this dir in our previous dir
+                    currentDir = currentDir.Directories.Where(x => x.DirectoryName == dir).First();
+                }
+            }
+            else if (currentInput[0].Contains("ls")) // If we are listing the files in the current directory
+            {
+                // We look for all the dirs
+                var dirs = currentInput.Where(y => y.Contains("dir")).Select(l => l.Substring(4, l.Length - 4)).ToArray();
+                currentDir.AddDirectories(dirs.Select(t => new AOCDirectory() { DirectoryName = t, Father = currentDir }).ToList());
+
+                // We look for files and its size
+                Regex numberRegex = new Regex(@"^\d+");
+
+                //Regex for the file name
+                Regex filenameRegex = new Regex(@"\d+\s+(\w+\.\w+)");
+
+                var files = currentInput.Where(x => numberRegex.IsMatch(x))
+                                .Select(l =>
+                                        new AOCFile()
+                                            {
+                                                FileName = filenameRegex.Match(l).Groups[1].Value,
+                                                FileSize = double.Parse(numberRegex.Match(l).Value),
+                                                Father = currentDir
+                                            })
+                                .ToList();
+                currentDir.Files = files;
+            }            
+        }
+
+        List<AOCDirectory> allDirectories = root.GetDirectories();
+
+        List<AOCDirectory> valid = allDirectories.Where(x => x.GetSize() <= 100000).ToList();
+
+        double sum = valid.Sum(x => x.GetSize());
+
+        // Now, we can check the total space
+        double totalUsedSpace = root.GetSize();
+        double unusedSpace = TOTAL_SPACE - totalUsedSpace;
+        double requiredSpaceForUpdate = SPACE_FOR_UPDATE - unusedSpace;
+
+        // Now, we found all the dirs that, if deleted, would free enough space for the update
+        List<AOCDirectory> dirsToDelete = allDirectories.Where(x => x.GetSize() >= requiredSpaceForUpdate).ToList();
+
+        // We pick the smallest
+        AOCDirectory dirToDelete = dirsToDelete.OrderBy(x => x.GetSize()).First();
+        double sizeToDelete = dirToDelete.GetSize();
+        
+    }
+}

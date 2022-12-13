@@ -1,0 +1,60 @@
+﻿@page "/day-4"
+<h3>Day4</h3>
+
+@if(totalContained > 0)
+{
+    <p>The total of fully contained taks are : @totalContained</p>    
+}
+
+@if(totalOverlap > 0)
+{
+    <p>The total of overlapped taks are : @totalOverlap</p>
+}
+
+@code {
+    int totalContained = 0;
+    int totalOverlap = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        string[] input = await File.ReadAllLinesAsync($"{System.IO.Directory.GetCurrentDirectory()}{@"\wwwroot\Day4Input.txt"}");
+
+        foreach(var item in input)
+        {
+            string[] parts = item.Split(",");
+            string[] expandedListOne = ExpandIds(int.Parse(parts[0].Split("-")[0]), int.Parse(parts[0].Split("-")[1]));
+            string[] expandedListTwo = ExpandIds(int.Parse(parts[1].Split("-")[0]), int.Parse(parts[1].Split("-")[1]));
+
+            // We have to check if one part contains the other one
+            if (expandedListOne.All(expandedListTwo.Contains) || expandedListTwo.All(expandedListOne.Contains))
+            {
+                totalContained++;
+            }
+
+            // We check if the list one contains at least one item from the list two
+            if (expandedListOne.Any(expandedListTwo.Contains))
+            {
+                totalOverlap++;
+            }
+
+        }
+    }
+
+    private string[] ExpandIds(int startId, int endingId)
+    {
+        if(startId == endingId)
+        {
+            return new string[] { startId.ToString() };
+        }
+
+        string[] ids = new string[endingId - startId + 1];
+        int index = 0;
+
+        for (int i = startId; i <= endingId; i++)
+        {
+            ids[index] = i.ToString();
+            index++;
+        }
+
+        return ids;
+    }
+}

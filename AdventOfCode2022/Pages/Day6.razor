@@ -1,0 +1,49 @@
+﻿@page "/day-6"
+<h3>Day6</h3>
+
+
+
+<p>Enter the number of different chars that needs to be looked up: </p>
+<input @bind="inputValue" type="number" />
+<br />
+<button @onclick="CalculateWinnerIndex">Go!</button>
+@if(winnerIndex > 0)
+{
+    <p>The winner index is: @winnerIndex</p>
+}
+
+@code {
+
+    int winnerIndex = 0;
+    private int? inputValue;
+    private string input = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        input = await File.ReadAllTextAsync($"{System.IO.Directory.GetCurrentDirectory()}{@"\wwwroot\Day6Input.txt"}");        
+    }
+
+    private void CalculateWinnerIndex()
+    {
+        bool stop = false;
+        int startIndex = 0;
+        int length = inputValue.Value;
+
+
+        while (stop == false)
+        {
+            var check = input.Substring(startIndex, length);
+
+            // We check if all the chars inside the string are different
+            if (check.Distinct().Count() == check.Length)
+            {
+                stop = true;
+                winnerIndex = startIndex + length;
+            }
+            else
+            {
+                startIndex++;
+            }
+        }
+    }
+}
